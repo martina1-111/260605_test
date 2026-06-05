@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音声入力SOAPノート</title>
+    <!-- Google Fonts: Noto Sans JP と Outfits などの洗練されたフォントの読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome アイコン (ボタンや装飾用) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-microphone-lines logo-icon"></i>
+                <h1>音声入力SOAPノート</h1>
+            </div>
+            <p class="header-subtitle">リハビリテーション・医療・介護向けの音声入力＆自動SOAP分類ツール</p>
+        </header>
+
+        <main class="app-main">
+            <!-- コントロールパネル・音声入力セクション -->
+            <section class="control-section">
+                <div class="card main-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-wave-square"></i> 音声入力</h2>
+                        <div id="status-badge" class="status-badge idle">
+                            <span class="status-dot"></span>
+                            <span id="status-text">待機中</span>
+                        </div>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button id="btn-start" class="btn btn-primary">
+                            <i class="fa-solid fa-play"></i> 録音開始
+                        </button>
+                        <button id="btn-stop" class="btn btn-danger" disabled>
+                            <i class="fa-solid fa-stop"></i> 録音停止
+                        </button>
+                    </div>
+
+                    <!-- リアルタイム音声認識プレビュー (発話中のテキスト) -->
+                    <div class="live-preview-container">
+                        <label class="input-label">リアルタイム認識プレビュー</label>
+                        <div id="live-preview" class="live-preview-box" placeholder="ここに音声認識された言葉がリアルタイムで表示されます..."></div>
+                    </div>
+
+                    <!-- 確定テキストエリア (直接編集可能) -->
+                    <div class="text-input-container">
+                        <label for="recognized-text" class="input-label">認識テキスト全体 (編集可能)</label>
+                        <textarea id="recognized-text" class="text-area" placeholder="録音停止後、または直接ここに入力したテキストがSOAP変換の対象となります。"></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="btn-convert" class="btn btn-success">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> SOAP変換
+                        </button>
+                        <button id="btn-clear" class="btn btn-secondary">
+                            <i class="fa-solid fa-trash-can"></i> テキストクリア
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SOAP出力結果セクション -->
+            <section class="soap-section">
+                <div class="soap-grid-header">
+                    <h2><i class="fa-solid fa-square-poll-horizontal"></i> SOAP分類結果</h2>
+                    <button id="btn-copy-all" class="btn btn-outline-all">
+                        <i class="fa-solid fa-copy"></i> すべてコピー
+                    </button>
+                </div>
+
+                <div class="soap-cards-grid">
+                    <!-- S: Subjective (主観的情報) -->
+                    <div class="soap-card card-s">
+                        <div class="soap-card-header">
+                            <div class="soap-badge badge-s">S</div>
+                            <h3>Subjective <span class="soap-ja">主観的情報</span></h3>
+                            <button class="btn-copy-card" data-target="s-content" title="Sをコピー">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="soap-card-body">
+                            <ul id="s-content" class="soap-list">
+                                <li class="empty-placeholder">該当する情報がありません。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- O: Objective (客観的情報) -->
+                    <div class="soap-card card-o">
+                        <div class="soap-card-header">
+                            <div class="soap-badge badge-o">O</div>
+                            <h3>Objective <span class="soap-ja">客観的情報</span></h3>
+                            <button class="btn-copy-card" data-target="o-content" title="Oをコピー">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="soap-card-body">
+                            <ul id="o-content" class="soap-list">
+                                <li class="empty-placeholder">該当する情報がありません。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- A: Assessment (評価) -->
+                    <div class="soap-card card-a">
+                        <div class="soap-card-header">
+                            <div class="soap-badge badge-a">A</div>
+                            <h3>Assessment <span class="soap-ja">評価・分析</span></h3>
+                            <button class="btn-copy-card" data-target="a-content" title="Aをコピー">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="soap-card-body">
+                            <ul id="a-content" class="soap-list">
+                                <li class="empty-placeholder">該当する情報がありません。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- P: Plan (計画) -->
+                    <div class="soap-card card-p">
+                        <div class="soap-card-header">
+                            <div class="soap-badge badge-p">P</div>
+                            <h3>Plan <span class="soap-ja">治療・指導計画</span></h3>
+                            <button class="btn-copy-card" data-target="p-content" title="Pをコピー">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="soap-card-body">
+                            <ul id="p-content" class="soap-list">
+                                <li class="empty-placeholder">該当する情報がありません。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 未分類 -->
+                    <div class="soap-card card-unclassified">
+                        <div class="soap-card-header">
+                            <div class="soap-badge badge-u">未</div>
+                            <h3>Unclassified <span class="soap-ja">未分類</span></h3>
+                            <button class="btn-copy-card" data-target="u-content" title="未分類をコピー">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="soap-card-body">
+                            <ul id="u-content" class="soap-list">
+                                <li class="empty-placeholder">該当する情報がありません。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 音声入力SOAPノート - Modern & Smart Care Tool</p>
+        </footer>
+    </div>
+
+    <!-- トースト通知用のコンテナ -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
